@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Papaya Assist -- Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a1a1a;
+      background: #fafafa;
+      padding: 2rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h1 { margin-bottom: 0.5rem; }
+    p.subtitle { color: #555; margin-bottom: 2rem; }
+    h2 { margin-top: 2rem; margin-bottom: 0.75rem; font-size: 1.1rem; }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1.25rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .note {
+      background: #fff8e1;
+      border-left: 4px solid #ffb300;
+      padding: 0.75rem 1rem;
+      margin-top: 1.5rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Papaya Assist -- Demo</h1>
+  <p class="subtitle">An embeddable AI chatbot powered by RAG. Open this page in a browser to see the widget in action.</p>
+
+  <h2>How to embed</h2>
+  <p>Add the following snippet before <code>&lt;/body&gt;</code> on any page:</p>
+
+  <pre><code>&lt;script
+  src="https://your-widget-host/chatbot-widget.min.js"
+  data-stream-url="YOUR_STREAM_URL"
+  data-tenant-id="YOUR_TENANT_ID"
+  data-title="Chat with us"
+  data-primary-color="#4f46e5"&gt;
+&lt;/script&gt;</code></pre>
+
+  <p class="note">
+    Replace <strong>YOUR_STREAM_URL</strong> and <strong>YOUR_TENANT_ID</strong> with the values from your deployment.
+    See the <a href="../README.md">README</a> for full configuration options.
+  </p>
+
+  <h2>Live preview</h2>
+  <p>The chat bubble should appear in the bottom-right corner of this page. It uses the local widget file with placeholder endpoints, so sending messages will fail until you configure real URLs.</p>
+
+  <!-- Widget embed — uses local file for demo purposes -->
+  <script
+    src="../frontend/chatbot-widget.min.js"
+    data-stream-url="YOUR_STREAM_URL"
+    data-tenant-id="YOUR_TENANT_ID"
+    data-title="Chat with us"
+    data-primary-color="#4f46e5">
+  </script>
+
+</body>
+</html>

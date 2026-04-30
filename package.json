@@ -1,0 +1,11 @@
+{
+  "name": "chatbot-widget",
+  "version": "1.0.0",
+  "description": "Embeddable chatbot widget with RAG",
+  "scripts": {
+    "build": "npx terser frontend/chatbot-widget.js -o frontend/chatbot-widget.min.js -c -m"
+  },
+  "devDependencies": {
+    "terser": "^5.31.0"
+  }
+}
