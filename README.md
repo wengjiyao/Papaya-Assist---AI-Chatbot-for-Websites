@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="papayalogo.png" alt="Papaya Assist" width="120">
+</p>
+
 # Papaya Assist -- AI Chatbot for Websites
 
 An open-source, embeddable AI chatbot powered by RAG (Retrieval-Augmented Generation). Upload your documents and the chatbot answers visitor questions based on your content.
