@@ -121,6 +121,8 @@ After [signing up](https://weng.ca/get-started), you can:
 
 The WordPress plugin provides a complete no-code experience. No embed code, no manual configuration.
 
+**Live example:** [papaya.infinityfree.me](https://papaya.infinityfree.me) -- a WordPress site with Papaya Assist installed.
+
 ### Requirements
 
 - WordPress 5.8+
