@@ -1,13 +1,13 @@
 (function ($) {
   "use strict";
 
-  var $notices = $("#bitesize-notices");
-  var $table = $("#bitesize-documents-table tbody");
-  var $fileInput = $("#bitesize-file-input");
-  var $uploadBtn = $("#bitesize-upload-btn");
-  var $uploadStatus = $("#bitesize-upload-status");
-  var $ingestBtn = $("#bitesize-ingest-btn");
-  var $ingestStatus = $("#bitesize-ingest-status");
+  var $notices = $("#papaya-assist-notices");
+  var $table = $("#papaya-assist-documents-table tbody");
+  var $fileInput = $("#papaya-assist-file-input");
+  var $uploadBtn = $("#papaya-assist-upload-btn");
+  var $uploadStatus = $("#papaya-assist-upload-status");
+  var $ingestBtn = $("#papaya-assist-ingest-btn");
+  var $ingestStatus = $("#papaya-assist-ingest-status");
 
   function showNotice(message, type) {
     var cls = type === "error" ? "notice-error" : "notice-success";
@@ -35,15 +35,15 @@
 
   function validateFile(file) {
     var ext = file.name.split(".").pop().toLowerCase();
-    return bitesizeAdmin.allowedTypes.indexOf(ext) !== -1;
+    return papayaAssistAdmin.allowedTypes.indexOf(ext) !== -1;
   }
 
   // Load document list
   function loadDocuments() {
     $table.html('<tr><td colspan="4">Loading...</td></tr>');
-    $.post(bitesizeAdmin.ajaxUrl, {
-      action: "bitesize_list_documents",
-      nonce: bitesizeAdmin.nonce,
+    $.post(papayaAssistAdmin.ajaxUrl, {
+      action: "papaya_assist_list_documents",
+      nonce: papayaAssistAdmin.nonce,
     })
       .done(function (response) {
         if (!response.success) {
@@ -79,7 +79,7 @@
             "<td>" +
             escHtml(date) +
             "</td>" +
-            '<td><button class="button button-small bitesize-delete-btn" data-key="' +
+            '<td><button class="button button-small papaya-assist-delete-btn" data-key="' +
             escHtml(name) +
             '">Delete</button></td>' +
             "</tr>";
@@ -108,7 +108,7 @@
           'File "' +
             files[i].name +
             '" is not a supported type. Allowed: ' +
-            bitesizeAdmin.allowedTypes.join(", "),
+            papayaAssistAdmin.allowedTypes.join(", "),
           "error"
         );
         return;
@@ -138,9 +138,9 @@
       );
 
       // Step 1: Get presigned URL from WP backend
-      $.post(bitesizeAdmin.ajaxUrl, {
-        action: "bitesize_get_upload_url",
-        nonce: bitesizeAdmin.nonce,
+      $.post(papayaAssistAdmin.ajaxUrl, {
+        action: "papaya_assist_get_upload_url",
+        nonce: papayaAssistAdmin.nonce,
         filename: file.name,
         content_type: file.type || "application/octet-stream",
       })
@@ -196,7 +196,7 @@
   });
 
   // Delete document
-  $(document).on("click", ".bitesize-delete-btn", function () {
+  $(document).on("click", ".papaya-assist-delete-btn", function () {
     var key = $(this).data("key");
     if (!confirm('Delete "' + key + '"?')) {
       return;
@@ -205,9 +205,9 @@
     var $btn = $(this);
     $btn.prop("disabled", true);
 
-    $.post(bitesizeAdmin.ajaxUrl, {
-      action: "bitesize_delete_document",
-      nonce: bitesizeAdmin.nonce,
+    $.post(papayaAssistAdmin.ajaxUrl, {
+      action: "papaya_assist_delete_document",
+      nonce: papayaAssistAdmin.nonce,
       key: key,
     })
       .done(function (response) {
@@ -239,9 +239,9 @@
     disableIngest();
     $ingestStatus.text("Processing...");
 
-    $.post(bitesizeAdmin.ajaxUrl, {
-      action: "bitesize_ingest",
-      nonce: bitesizeAdmin.nonce,
+    $.post(papayaAssistAdmin.ajaxUrl, {
+      action: "papaya_assist_ingest",
+      nonce: papayaAssistAdmin.nonce,
     })
       .done(function (response) {
         $ingestStatus.text("");

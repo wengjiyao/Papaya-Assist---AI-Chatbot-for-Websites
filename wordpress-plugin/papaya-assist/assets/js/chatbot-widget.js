@@ -1,12 +1,20 @@
 (function () {
   "use strict";
 
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
   var script = document.currentScript;
-  var cfg = window.__bitesize || {};
+  var cfg = window.__papayaAssist || {};
   const API_URL = (script && script.getAttribute("data-api-url")) || cfg.apiUrl || "";
   const STREAM_URL = (script && script.getAttribute("data-stream-url")) || cfg.streamUrl || "";
-  const PRIMARY_COLOR = (script && script.getAttribute("data-primary-color")) || cfg.primaryColor || "#4f46e5";
-  const TITLE = (script && script.getAttribute("data-title")) || cfg.title || "Chat with us";
+  const RAW_COLOR = (script && script.getAttribute("data-primary-color")) || cfg.primaryColor || "#4f46e5";
+  const PRIMARY_COLOR = /^#[0-9a-fA-F]{6}$/.test(RAW_COLOR) ? RAW_COLOR : "#4f46e5";
+  const RAW_TITLE = (script && script.getAttribute("data-title")) || cfg.title || "Chat with us";
+  const TITLE = escapeHtml(RAW_TITLE);
   const TENANT_ID = (script && script.getAttribute("data-tenant-id")) || cfg.tenantId || "";
   const USER_TOKEN = (script && script.getAttribute("data-user-token")) || cfg.userToken || "";
   const MAX_HISTORY = 10;

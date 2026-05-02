@@ -1,5 +1,5 @@
 /* Card layout */
-.bitesize-card {
+.papaya-assist-card {
     background: #fff;
     border: 1px solid #c3c4c7;
     border-radius: 4px;
@@ -8,19 +8,19 @@
     max-width: 800px;
 }
 
-.bitesize-card h2 {
+.papaya-assist-card h2 {
     margin-top: 0;
 }
 
 /* Auth tabs */
-.bitesize-auth-tabs {
+.papaya-assist-auth-tabs {
     display: flex;
     gap: 0;
     border-bottom: 1px solid #c3c4c7;
     margin-bottom: 0;
 }
 
-.bitesize-tab {
+.papaya-assist-tab {
     padding: 8px 20px;
     border: 1px solid transparent;
     border-bottom: none;
@@ -31,7 +31,7 @@
     margin-bottom: -1px;
 }
 
-.bitesize-tab.active {
+.papaya-assist-tab.active {
     background: #fff;
     border-color: #c3c4c7;
     border-bottom-color: #fff;
@@ -39,21 +39,21 @@
     font-weight: 600;
 }
 
-.bitesize-tab-content {
+.papaya-assist-tab-content {
     display: none;
 }
 
-.bitesize-tab-content.active {
+.papaya-assist-tab-content.active {
     display: block;
 }
 
 /* Connected state */
-.bitesize-connected p {
+.papaya-assist-connected p {
     margin: 4px 0;
 }
 
 /* Divider */
-.bitesize-divider {
+.papaya-assist-divider {
     display: flex;
     align-items: center;
     text-align: center;
@@ -61,42 +61,42 @@
     color: #999;
 }
 
-.bitesize-divider::before,
-.bitesize-divider::after {
+.papaya-assist-divider::before,
+.papaya-assist-divider::after {
     content: "";
     flex: 1;
     border-bottom: 1px solid #dcdcde;
 }
 
-.bitesize-divider span {
+.papaya-assist-divider span {
     padding: 0 12px;
     font-size: 13px;
 }
 
 /* Google button wrapper */
-#bitesize-google-btn-wrapper {
+#papaya-assist-google-btn-wrapper {
     margin-bottom: 16px;
 }
 
 /* Upload area */
-.bitesize-upload-area {
+.papaya-assist-upload-area {
     display: flex;
     align-items: center;
     gap: 10px;
     margin: 12px 0;
 }
 
-#bitesize-upload-status,
-#bitesize-ingest-status {
+#papaya-assist-upload-status,
+#papaya-assist-ingest-status {
     margin-left: 10px;
     font-style: italic;
     color: #666;
 }
 
-#bitesize-documents-table .bitesize-delete-btn {
+#papaya-assist-documents-table .papaya-assist-delete-btn {
     color: #b32d2e;
 }
 
-#bitesize-ingest-btn {
+#papaya-assist-ingest-btn {
     margin-top: 4px;
 }

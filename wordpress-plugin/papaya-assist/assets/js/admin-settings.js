@@ -1,9 +1,9 @@
 (function ($) {
   "use strict";
 
-  var $notices = $("#bitesize-auth-notices");
-  var $connected = $("#bitesize-connected");
-  var $notConnected = $("#bitesize-not-connected");
+  var $notices = $("#papaya-assist-auth-notices");
+  var $connected = $("#papaya-assist-connected");
+  var $notConnected = $("#papaya-assist-not-connected");
 
   function showNotice(message, type) {
     var cls = type === "error" ? "notice-error" : "notice-success";
@@ -21,11 +21,11 @@
   }
 
   // Open popup to weng.ca/auth/chatbot
-  $(document).on("click", "#bitesize-connect-btn", function () {
+  $(document).on("click", "#papaya-assist-connect-btn", function () {
     var url =
-      bitesizeSettings.authUrl +
+      papayaAssistSettings.authUrl +
       "?tenant_id=" +
-      encodeURIComponent(bitesizeSettings.tenantId);
+      encodeURIComponent(papayaAssistSettings.tenantId);
 
     var w = 450;
     var h = 600;
@@ -34,12 +34,13 @@
 
     window.open(
       url,
-      "bitesize-auth",
+      "papaya-assist-auth",
       "width=" + w + ",height=" + h + ",left=" + left + ",top=" + top
     );
   });
 
   // Listen for postMessage from popup
+  // Keep type check as 'bitesize-auth' — external auth page at weng.ca sends this value.
   window.addEventListener("message", function (event) {
     // Verify origin
     if (event.origin !== "https://weng.ca") return;
@@ -48,20 +49,23 @@
     var data = event.data;
 
     // Save credentials to WordPress via AJAX
-    $.post(bitesizeSettings.ajaxUrl, {
-      action: "bitesize_save_credentials",
-      nonce: bitesizeSettings.nonce,
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_save_credentials",
+      nonce: papayaAssistSettings.nonce,
       api_key: data.api_key,
       tenant_id: data.tenant_id,
       email: data.email,
+      email_verified: data.email_verified ? "true" : "false",
     })
       .done(function (response) {
         if (response.success) {
           // Update UI to connected state
-          $("#bitesize-connected-email").text(data.email);
+          $("#papaya-assist-connected-email").text(data.email);
           $connected.show();
           $notConnected.hide();
           showNotice("Account connected successfully!", "success");
+          // Check verification status from backend after connecting
+          checkVerification();
         } else {
           showNotice("Failed to save credentials.", "error");
         }
@@ -72,8 +76,8 @@
   });
 
   // Change password
-  $(document).on("click", "#bitesize-change-password-btn", function () {
-    var password = $("#bitesize-new-password").val();
+  $(document).on("click", "#papaya-assist-change-password-btn", function () {
+    var password = $("#papaya-assist-new-password").val();
     if (!password || password.length < 8) {
       showNotice("Password must be at least 8 characters.", "error");
       return;
@@ -82,14 +86,14 @@
     var $btn = $(this);
     $btn.prop("disabled", true);
 
-    $.post(bitesizeSettings.ajaxUrl, {
-      action: "bitesize_change_password",
-      nonce: bitesizeSettings.nonce,
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_change_password",
+      nonce: papayaAssistSettings.nonce,
       password: password,
     })
       .done(function (response) {
         if (response.success) {
-          $("#bitesize-new-password").val("");
+          $("#papaya-assist-new-password").val("");
           showNotice("Password changed successfully!", "success");
         } else {
           showNotice(response.data || "Failed to change password.", "error");
@@ -106,16 +110,16 @@
   // Fetch and display usage info
   function loadUsage() {
     if (!$connected.is(":visible")) return;
-    $.post(bitesizeSettings.ajaxUrl, {
-      action: "bitesize_get_usage",
-      nonce: bitesizeSettings.nonce,
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_get_usage",
+      nonce: papayaAssistSettings.nonce,
     }).done(function (response) {
       if (response.success && response.data) {
         var d = response.data;
         var tier = d.tier.charAt(0).toUpperCase() + d.tier.slice(1);
         var docLimit =
           d.document_limit >= 9007199254740991 ? "Unlimited" : d.document_limit;
-        $("#bitesize-usage-text").text(
+        $("#papaya-assist-usage-text").text(
           tier +
             " tier: " +
             d.message_count +
@@ -128,26 +132,45 @@
             " documents"
         );
       } else {
-        $("#bitesize-usage-text").text("Unable to load usage info.");
+        $("#papaya-assist-usage-text").text("Unable to load usage info.");
       }
     }).fail(function () {
-      $("#bitesize-usage-text").text("Unable to load usage info.");
+      $("#papaya-assist-usage-text").text("Unable to load usage info.");
     });
   }
 
   loadUsage();
 
+  // Check email verification status from backend
+  function checkVerification() {
+    if (!$connected.is(":visible")) return;
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_check_verification",
+      nonce: papayaAssistSettings.nonce,
+    }).done(function (response) {
+      if (response.success && response.data) {
+        if (response.data.email_verified) {
+          $("#papaya-assist-verify-notice").hide();
+        } else {
+          $("#papaya-assist-verify-notice").show();
+        }
+      }
+    });
+  }
+
+  checkVerification();
+
   // Upgrade Plan
-  $(document).on("click", "#bitesize-upgrade-btn", function () {
+  $(document).on("click", "#papaya-assist-upgrade-btn", function () {
     var $btn = $(this);
     $btn.prop("disabled", true).text("Loading...");
 
     // Open window immediately (in click context) to avoid popup blocker
     var upgradeWindow = window.open("about:blank", "_blank");
 
-    $.post(bitesizeSettings.ajaxUrl, {
-      action: "bitesize_get_upgrade_url",
-      nonce: bitesizeSettings.nonce,
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_get_upgrade_url",
+      nonce: papayaAssistSettings.nonce,
     })
       .done(function (response) {
         if (response.success && response.data && response.data.url) {
@@ -167,7 +190,7 @@
   });
 
   // Disconnect
-  $(document).on("click", "#bitesize-disconnect-btn", function () {
+  $(document).on("click", "#papaya-assist-disconnect-btn", function () {
     if (
       !confirm(
         "Disconnect your account? The chatbot will stop working until you connect again."
@@ -176,9 +199,9 @@
       return;
     }
 
-    $.post(bitesizeSettings.ajaxUrl, {
-      action: "bitesize_disconnect",
-      nonce: bitesizeSettings.nonce,
+    $.post(papayaAssistSettings.ajaxUrl, {
+      action: "papaya_assist_disconnect",
+      nonce: papayaAssistSettings.nonce,
     }).done(function (response) {
       if (response.success) {
         $connected.hide();

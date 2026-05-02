@@ -1,22 +1,50 @@
 (function () {
   "use strict";
 
-  const script = document.currentScript;
-  const API_URL = script.getAttribute("data-api-url") || "";
-  const STREAM_URL = script.getAttribute("data-stream-url") || "";
-  const PRIMARY_COLOR = script.getAttribute("data-primary-color") || "#4f46e5";
-  const TITLE = script.getAttribute("data-title") || "Chat with us";
-  const TENANT_ID = script.getAttribute("data-tenant-id") || "";
-  const USER_TOKEN = script.getAttribute("data-user-token") || "";
+  var script = document.currentScript;
+  var cfg = window.__bitesize || {};
+  const API_URL = (script && script.getAttribute("data-api-url")) || cfg.apiUrl || "";
+  const STREAM_URL = (script && script.getAttribute("data-stream-url")) || cfg.streamUrl || "";
+  const ADMIN_URL = (script && script.getAttribute("data-admin-url")) || cfg.adminUrl || "";
+  const FALLBACK_COLOR = (script && script.getAttribute("data-primary-color")) || cfg.primaryColor || "#4f46e5";
+  const FALLBACK_TITLE = (script && script.getAttribute("data-title")) || cfg.title || "Chat with us";
+  const TENANT_ID = (script && script.getAttribute("data-tenant-id")) || cfg.tenantId || "";
+  const USER_TOKEN = (script && script.getAttribute("data-user-token")) || cfg.userToken || "";
   const MAX_HISTORY = 10;
+  const STORAGE_KEY = "cb_state_" + TENANT_ID;
 
-  const host = document.createElement("div");
-  host.id = "chatbot-widget-host";
-  document.body.appendChild(host);
+  function saveState(history, isOpen) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ history: history, open: isOpen }));
+    } catch (e) {}
+  }
 
-  const shadow = host.attachShadow({ mode: "closed" });
+  function loadState() {
+    try {
+      var raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
 
-  const styles = `
+  async function fetchWidgetConfig() {
+    if (!ADMIN_URL || !TENANT_ID) return null;
+    try {
+      var res = await fetch(ADMIN_URL + "/admin/widget-config/" + encodeURIComponent(TENANT_ID));
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function buildWidget(PRIMARY_COLOR, TITLE) {
+    const host = document.createElement("div");
+    host.id = "chatbot-widget-host";
+    document.body.appendChild(host);
+
+    const shadow = host.attachShadow({ mode: "closed" });
+
+    const styles = `
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     .cb-bubble {
@@ -211,7 +239,7 @@
     }
   `;
 
-  const html = `
+    const html = `
     <style>${styles}</style>
     <div class="cb-label">${TITLE}</div>
     <button class="cb-bubble" aria-label="Open chat">
@@ -232,166 +260,190 @@
     </div>
   `;
 
-  shadow.innerHTML = html;
+    shadow.innerHTML = html;
 
-  const bubble = shadow.querySelector(".cb-bubble");
-  const label = shadow.querySelector(".cb-label");
-  const window_ = shadow.querySelector(".cb-window");
-  const closeBtn = shadow.querySelector(".cb-close");
-  const messagesEl = shadow.querySelector(".cb-messages");
-  const typingEl = shadow.querySelector(".cb-typing");
-  const inputEl = shadow.querySelector(".cb-input");
-  const sendBtn = shadow.querySelector(".cb-send");
+    const bubble = shadow.querySelector(".cb-bubble");
+    const label = shadow.querySelector(".cb-label");
+    const window_ = shadow.querySelector(".cb-window");
+    const closeBtn = shadow.querySelector(".cb-close");
+    const messagesEl = shadow.querySelector(".cb-messages");
+    const typingEl = shadow.querySelector(".cb-typing");
+    const inputEl = shadow.querySelector(".cb-input");
+    const sendBtn = shadow.querySelector(".cb-send");
 
-  let history = [];
+    let history = [];
 
-  bubble.addEventListener("click", function () {
-    window_.classList.add("open");
-    bubble.style.display = "none";
-    label.style.display = "none";
-    inputEl.focus();
-  });
-
-  label.addEventListener("click", function () {
-    window_.classList.add("open");
-    bubble.style.display = "none";
-    label.style.display = "none";
-    inputEl.focus();
-  });
-
-  closeBtn.addEventListener("click", function () {
-    window_.classList.remove("open");
-    bubble.style.display = "flex";
-    label.style.display = "block";
-  });
-
-  function addMessage(text, role) {
-    var msg = document.createElement("div");
-    msg.className = "cb-msg " + role;
-    msg.textContent = text;
-    messagesEl.insertBefore(msg, typingEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return msg;
-  }
-
-  function setLoading(on) {
-    typingEl.classList.toggle("visible", on);
-    sendBtn.disabled = on;
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
-
-  async function sendBlockingMessage(text) {
-    setLoading(true);
-    try {
-      var payload = {
-          message: text,
-          history: history.slice(-MAX_HISTORY),
-          tenant_id: TENANT_ID,
-        };
-      if (USER_TOKEN) payload.user_token = USER_TOKEN;
-      var res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      var data = await res.json();
-      var reply = data.reply || "Sorry, something went wrong.";
-      addMessage(reply, "bot");
-      history.push({ role: "assistant", content: reply });
-    } catch (e) {
-      addMessage("Unable to reach the server. Please try again.", "bot");
+    function openChat() {
+      window_.classList.add("open");
+      bubble.style.display = "none";
+      label.style.display = "none";
+      inputEl.focus();
+      saveState(history, true);
     }
-    setLoading(false);
-  }
 
-  async function sendStreamingMessage(text) {
-    setLoading(true);
-    var botMsg = addMessage("", "bot");
-    var fullReply = "";
+    function closeChat() {
+      window_.classList.remove("open");
+      bubble.style.display = "flex";
+      label.style.display = "block";
+      saveState(history, false);
+    }
 
-    try {
-      var payload = {
-          message: text,
-          history: history.slice(-MAX_HISTORY),
-          tenant_id: TENANT_ID,
-        };
-      if (USER_TOKEN) payload.user_token = USER_TOKEN;
-      var res = await fetch(STREAM_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    bubble.addEventListener("click", openChat);
+    label.addEventListener("click", openChat);
+    closeBtn.addEventListener("click", closeChat);
 
-      if (!res.ok) {
-        botMsg.textContent = "Sorry, something went wrong.";
-        setLoading(false);
-        return;
+    function addMessage(text, role) {
+      var msg = document.createElement("div");
+      msg.className = "cb-msg " + role;
+      msg.textContent = text;
+      messagesEl.insertBefore(msg, typingEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return msg;
+    }
+
+    function setLoading(on) {
+      typingEl.classList.toggle("visible", on);
+      sendBtn.disabled = on;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendBlockingMessage(text) {
+      setLoading(true);
+      try {
+        var payload = {
+            message: text,
+            history: history.slice(-MAX_HISTORY),
+            tenant_id: TENANT_ID,
+          };
+        if (USER_TOKEN) payload.user_token = USER_TOKEN;
+        var res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        var data = await res.json();
+        var reply = data.reply || "Sorry, something went wrong.";
+        addMessage(reply, "bot");
+        history.push({ role: "assistant", content: reply });
+        saveState(history, true);
+      } catch (e) {
+        addMessage("Unable to reach the server. Please try again.", "bot");
       }
+      setLoading(false);
+    }
 
-      var reader = res.body.getReader();
-      var decoder = new TextDecoder();
-      var buffer = "";
+    async function sendStreamingMessage(text) {
+      setLoading(true);
+      var botMsg = addMessage("", "bot");
+      var fullReply = "";
 
-      while (true) {
-        var result = await reader.read();
-        if (result.done) break;
+      try {
+        var payload = {
+            message: text,
+            history: history.slice(-MAX_HISTORY),
+            tenant_id: TENANT_ID,
+          };
+        if (USER_TOKEN) payload.user_token = USER_TOKEN;
+        var res = await fetch(STREAM_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-        buffer += decoder.decode(result.value, { stream: true });
-        var lines = buffer.split("\n");
-        buffer = lines.pop();
+        if (!res.ok) {
+          botMsg.textContent = "Sorry, something went wrong.";
+          setLoading(false);
+          return;
+        }
 
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i].trim();
-          if (!line.startsWith("data: ")) continue;
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = "";
 
-          var payload = line.slice(6);
-          if (payload === "[DONE]") continue;
+        while (true) {
+          var result = await reader.read();
+          if (result.done) break;
 
-          try {
-            var parsed = JSON.parse(payload);
-            if (parsed.token) {
-              fullReply += parsed.token;
-              botMsg.textContent = fullReply;
-              messagesEl.scrollTop = messagesEl.scrollHeight;
+          buffer += decoder.decode(result.value, { stream: true });
+          var lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line.startsWith("data: ")) continue;
+
+            var payload = line.slice(6);
+            if (payload === "[DONE]") continue;
+
+            try {
+              var parsed = JSON.parse(payload);
+              if (parsed.token) {
+                fullReply += parsed.token;
+                botMsg.textContent = fullReply;
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+              }
+            } catch (e) {
+              // skip malformed JSON
             }
-          } catch (e) {
-            // skip malformed JSON
           }
         }
-      }
 
-      if (!fullReply) {
-        botMsg.textContent = "Sorry, I didn't get a response. Please try again.";
+        if (!fullReply) {
+          botMsg.textContent = "Sorry, I didn't get a response. Please try again.";
+        }
+        history.push({ role: "assistant", content: fullReply });
+        saveState(history, true);
+      } catch (e) {
+        if (!fullReply) {
+          botMsg.textContent = "Unable to reach the server. Please try again.";
+        }
       }
-      history.push({ role: "assistant", content: fullReply });
-    } catch (e) {
-      if (!fullReply) {
-        botMsg.textContent = "Unable to reach the server. Please try again.";
+      setLoading(false);
+    }
+
+    async function sendMessage() {
+      var text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = "";
+      addMessage(text, "user");
+      history.push({ role: "user", content: text });
+      saveState(history, true);
+
+      if (STREAM_URL) {
+        await sendStreamingMessage(text);
+      } else {
+        await sendBlockingMessage(text);
       }
     }
-    setLoading(false);
+
+    sendBtn.addEventListener("click", sendMessage);
+    inputEl.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Restore previous state from sessionStorage
+    var saved = loadState();
+    if (saved) {
+      if (saved.history && saved.history.length) {
+        history = saved.history;
+        for (var i = 0; i < history.length; i++) {
+          addMessage(history[i].content, history[i].role === "user" ? "user" : "bot");
+        }
+      }
+      if (saved.open) {
+        openChat();
+      }
+    }
   }
 
-  async function sendMessage() {
-    var text = inputEl.value.trim();
-    if (!text) return;
-
-    inputEl.value = "";
-    addMessage(text, "user");
-    history.push({ role: "user", content: text });
-
-    if (STREAM_URL) {
-      await sendStreamingMessage(text);
-    } else {
-      await sendBlockingMessage(text);
-    }
-  }
-
-  sendBtn.addEventListener("click", sendMessage);
-  inputEl.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+  // Fetch widget config from backend, then build the widget
+  fetchWidgetConfig().then(function (config) {
+    var title = (config && config.widget_title) || FALLBACK_TITLE;
+    var color = (config && config.widget_color) || FALLBACK_COLOR;
+    buildWidget(color, title);
   });
 })();

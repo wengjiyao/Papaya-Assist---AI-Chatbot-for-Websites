@@ -46,6 +46,7 @@ A chat bubble appears in the bottom-right corner. Visitors click it, type a ques
 |--------------------|----------|----------------|--------------------------------------------------------------------|
 | data-stream-url    | Yes*     | ""             | Streaming SSE endpoint URL. Responses stream token-by-token.       |
 | data-api-url       | Yes*     | ""             | REST chat endpoint URL. Fallback when `data-stream-url` is not set.|
+| data-admin-url     | No       | ""             | Admin API URL. When set, widget fetches title/color from backend.  |
 | data-tenant-id     | Yes      | ""             | Your tenant identifier (assigned during sign-up).                  |
 | data-title         | No       | "Chat with us" | Text shown in the header bar and the floating label.               |
 | data-primary-color | No       | "#4f46e5"      | Hex color for the bubble, header, send button, and user messages.  |
@@ -127,10 +128,10 @@ The WordPress plugin provides a complete no-code experience. No embed code, no m
 
 ### Installation
 
-1. Download [`wordpress-plugin/bitesize-chatbot.zip`](wordpress-plugin/bitesize-chatbot.zip).
+1. Download [`wordpress-plugin/papaya-assist.zip`](wordpress-plugin/papaya-assist.zip).
 2. In WordPress, go to **Plugins > Add New > Upload Plugin** and upload the zip.
 3. Activate the plugin.
-4. Go to **Settings > Bitesize Chatbot**.
+4. Go to **Settings > Papaya Assist**.
 
 ### Setup
 
@@ -161,6 +162,9 @@ The WordPress plugin provides a complete no-code experience. No embed code, no m
 - No manual API keys or endpoint configuration needed
 - Presigned S3 uploads -- files go directly from your browser to storage, not through your WordPress server
 - Nonce-verified AJAX for all API communication
+- Email verification warning after sign-up
+- Chatbot state (open/closed and conversation) persists across page navigations
+- Full internationalization (i18n) support
 
 ### How the plugin works
 
@@ -188,7 +192,7 @@ Visitor -> Widget (JS) -> API Gateway (REST) -----> Lambda (Rust) -> OpenAI
 | Chat streaming   | `backend/chat-rust/chat-stream/`     | Rust, axum SSE, Lambda Web Adapter    |
 | Admin API        | `backend/chat-rust/admin-rust/`      | Rust, axum, Lambda Web Adapter        |
 | Shared library   | `backend/chat-rust/shared/`          | Rust (DynamoDB, S3, OpenAI, Pinecone) |
-| WordPress plugin | `wordpress-plugin/bitesize-chatbot/` | PHP                                   |
+| WordPress plugin | `wordpress-plugin/papaya-assist/`    | PHP                                   |
 | Infrastructure   | `backend/template.yaml`              | AWS SAM                               |
 
 ---
@@ -272,12 +276,12 @@ papaya-assist/
 ├── demo/
 │   └── index.html                 # Demo page showing how to embed the widget
 ├── wordpress-plugin/
-│   └── bitesize-chatbot/          # WordPress plugin
-│       ├── bitesize-chatbot.php
+│   └── papaya-assist/             # WordPress plugin (v1.5.2)
+│       ├── papaya-assist.php
 │       ├── includes/
-│       │   ├── class-bitesize-settings.php
-│       │   ├── class-bitesize-documents.php
-│       │   └── class-bitesize-widget.php
+│       │   ├── class-papaya-settings.php
+│       │   ├── class-papaya-documents.php
+│       │   └── class-papaya-widget.php
 │       └── assets/
 │           ├── js/chatbot-widget.js
 │           ├── js/admin-settings.js
